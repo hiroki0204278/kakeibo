@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import { randomUUID } from "crypto";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -27,16 +24,11 @@ export async function POST(request: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${randomUUID()}.${ext}`;
-    const uploadDir = join(process.cwd(), "public", "uploads");
-    const filePath = join(uploadDir, filename);
-
-    await writeFile(filePath, buffer);
-    const imageUrl = `/uploads/${filename}`;
-
     const base64 = buffer.toString("base64");
     const mimeType = file.type || "image/jpeg";
+
+    // 画像をbase64のデータURLとして保存（ファイル保存不要）
+    const imageUrl = `data:${mimeType};base64,${base64}`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
